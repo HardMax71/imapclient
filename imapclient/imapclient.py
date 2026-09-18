@@ -1883,6 +1883,8 @@ def _normalise_search_criteria(criteria, charset=None):
             inner[0] = b"(" + inner[0]
             inner[-1] = inner[-1] + b")"
             out.extend(inner)  # flatten
+        elif isinstance(item, literal):
+            out.append(item)
         else:
             out.append(_quoted.maybe(to_bytes(item, charset)))
     return out
