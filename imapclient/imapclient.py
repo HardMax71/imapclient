@@ -1714,7 +1714,7 @@ class IMAPClient:
                 raise ValueError("command args must be passed as bytes")
             if b"\x00" in item:
                 raise ValueError("NUL is not allowed in command arguments")
-            if not _is8bit(item) and _CR_OR_LF.search(item):
+            if not _is8bit(item) and (b"\r" in item or b"\n" in item):
                 # CR and LF end the command line on the wire, so an argument
                 # carrying them would be run as extra commands. A literal can
                 # hold them, which is what the 8-bit path already sends.
@@ -1992,9 +1992,6 @@ def as_pairs(items):
 def as_triplets(items):
     a = iter(items)
     return zip(a, a, a)
-
-
-_CR_OR_LF = re.compile(rb"[\r\n]")
 
 
 def _is8bit(data):
