@@ -15,9 +15,9 @@ from unittest.mock import Mock, patch, sentinel
 from imapclient.exceptions import CapabilityError, IMAPClientError, ProtocolError
 from imapclient.fixed_offset import FixedOffset
 from imapclient.imapclient import (
-    _literal,
     _parse_quota,
     IMAPlibLoggerAdapter,
+    literal,
     MailboxQuotaRoots,
     Quota,
     require_capability,
@@ -416,11 +416,11 @@ class TestAppend(IMAPClientTest):
                 b'"foobar"',
                 b"(FLAG WAVE)",
                 b'"05-Apr-2009 11:00:05 +0200"',
-                _literal(b"msg1"),
+                literal(b"msg1"),
                 b"(FLAG WAVE)",
-                _literal(b"msg2"),
+                literal(b"msg2"),
                 b'"05-Apr-2009 11:00:05 +0200"',
-                _literal(b"msg3"),
+                literal(b"msg3"),
             ],
             uid=False,
         )
@@ -771,16 +771,14 @@ class TestRawCommandRejectsControlCharacters(IMAPClientTest):
 
     def test_nul_is_rejected_even_inside_a_literal(self):
         with self.assertRaises(ValueError):
-            self.client._raw_command(b"SEARCH", [b"TEXT", _literal(b"a\x00b")])
+            self.client._raw_command(b"SEARCH", [b"TEXT", literal(b"a\x00b")])
 
         self.client._imap.send.assert_not_called()
 
     def test_crlf_inside_a_literal_is_allowed(self):
         self.client._send_literal = Mock()
 
-        self.client._raw_command(
-            b"SEARCH", [b"TEXT", _literal(b"line one\r\nline two")]
-        )
+        self.client._raw_command(b"SEARCH", [b"TEXT", literal(b"line one\r\nline two")])
 
         self.client._send_literal.assert_called_once()
 
@@ -1042,7 +1040,7 @@ class TestRawCommand(IMAPClientTest):
         self.client._cached_capabilities = (b"LITERAL+",)
 
         typ, data = self.client._raw_command(
-            b"APPEND", [b"\xff", _literal(b"hello")], uid=False
+            b"APPEND", [b"\xff", literal(b"hello")], uid=False
         )
         self.assertEqual(typ, "OK")
         self.assertEqual(data, ["done"])
@@ -1056,7 +1054,7 @@ class TestRawCommand(IMAPClientTest):
 
         typ, data = self.client._raw_command(
             b"APPEND",
-            [b"\xff", _literal(b"hello"), b"TEXT", _literal(b"test")],
+            [b"\xff", literal(b"hello"), b"TEXT", literal(b"test")],
             uid=False,
         )
         self.assertEqual(typ, "OK")

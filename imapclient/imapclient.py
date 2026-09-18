@@ -42,6 +42,7 @@ __all__ = [
     "FLAGGED",
     "DRAFT",
     "RECENT",
+    "literal",
 ]
 
 
@@ -1457,9 +1458,9 @@ class IMAPClient:
                         yield to_bytes(seq_to_parenstr(m["flags"]))
                     if "date" in m:
                         yield to_bytes('"%s"' % datetime_to_INTERNALDATE(m["date"]))
-                    yield _literal(to_bytes(m["msg"]))
+                    yield literal(to_bytes(m["msg"]))
                 else:
-                    yield _literal(to_bytes(m))
+                    yield literal(to_bytes(m))
 
         msgs = list(chunks())
 
@@ -1708,7 +1709,7 @@ class IMAPClient:
         # Check every argument before anything goes on the wire: a bad
         # argument found after a literal was sent would leave the server
         # waiting inside a half-sent command.
-        for item in prefix + args:
+        for item in itertools.chain(prefix, args):
             if not isinstance(item, bytes):
                 raise ValueError("command args must be passed as bytes")
             if b"\x00" in item:
@@ -1719,7 +1720,7 @@ class IMAPClient:
                 # hold them, which is what the 8-bit path already sends.
                 raise ValueError(
                     "CR and LF are not allowed in command arguments; "
-                    "wrap the value in imapclient._literal to send it as a literal"
+                    "wrap the value in imapclient.literal to send it as a literal"
                 )
 
         line = []
@@ -1893,8 +1894,11 @@ def _normalise_sort_criteria(criteria, charset=None):
     return b"(" + b" ".join(to_bytes(item).upper() for item in criteria) + b")"
 
 
-class _literal(bytes):
+class literal(bytes):
     """Hold message data that should always be sent as a literal."""
+
+
+_literal = literal  # old private name, kept for callers that imported it
 
 
 class _quoted(bytes):
@@ -1992,7 +1996,7 @@ _CR_OR_LF = re.compile(rb"[\r\n]")
 
 
 def _is8bit(data):
-    return isinstance(data, _literal) or any(b > 127 for b in data)
+    return isinstance(data, literal) or any(b > 127 for b in data)
 
 
 def _iter_with_last(items):
